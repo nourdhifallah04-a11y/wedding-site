@@ -1,0 +1,56 @@
+/* Gallery layout and responsive rules */
+.gallery{
+	padding: 1rem 1rem 2rem;
+}
+
+.gallery h2{
+	margin-top: 0;
+	text-align: center;
+}
+
+.grid{
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 1rem;
+	max-width: 1100px;
+	margin: 0 auto;
+	align-items: start;
+}
+
+.tile{
+	overflow: hidden;
+	border-radius: 8px;
+	background: transparent;
+}
+
+.tile img{
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+	transition: transform .3s ease;
+}
+
+@media (max-width: 700px){
+	.grid{
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.75rem;
+	}
+	.tile img{
+		aspect-ratio: 4 / 3;
+	}
+}
+
+@media (max-width: 500px){
+	.grid{
+		grid-template-columns: 1fr;
+	}
+	.tile img{
+		aspect-ratio: 16 / 9;
+	}
+}
+
+.tile img:hover{
+	transform: scale(1.05);
+}

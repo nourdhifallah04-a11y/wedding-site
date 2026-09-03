@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Admin - Messages</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial; padding:20px}
+      table{width:100%; border-collapse:collapse}
+      th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+      pre{white-space:pre-wrap}
+    </style>
+  </head>
+  <body>
+    <h1>Messages envoyés</h1>
+    <div id="count">Chargement…</div>
+    <table id="tbl" style="display:none">
+      <thead><tr><th>#</th><th>Nom</th><th>Message</th><th>Reçu</th></tr></thead>
+      <tbody id="body"></tbody>
+    </table>
+
+    <script>
+      async function load() {
+        const res = await fetch('/api/messages');
+        const data = await res.json();
+        const body = document.getElementById('body');
+        if (!data || data.length === 0) { document.getElementById('count').textContent = 'Aucun message'; return; }
+        document.getElementById('count').textContent = data.length + ' message(s)';
+        document.getElementById('tbl').style.display = '';
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${row.id}</td><td>${(row.prenom||'')} ${(row.nom||'')}</td><td><pre>${(row.message||'')}</pre></td><td>${row.created_at}</td>`;
+          body.appendChild(tr);
+        });
+      }
+      load().catch(e=>{document.getElementById('count').textContent='Erreur de chargement';console.error(e)});
+    </script>
+  </body>
+</html>

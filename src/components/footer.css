@@ -1,0 +1,8 @@
+.site-footer{max-width:1100px;margin:0 auto;padding:2rem 1rem;text-align:center}
+.site-footer p{margin:0}
+.site-footer .credit{font-size:.9rem;color:rgba(0,0,0,.6)}
+
+@media (max-width:600px){
+	.site-footer{padding:1.2rem .75rem}
+	.site-footer .credit{font-size:.85rem}
+}

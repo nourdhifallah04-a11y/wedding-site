@@ -1,0 +1,8 @@
+.info{max-width:1000px;margin:0 auto;padding:1rem}
+.info h2{margin-top:0}
+.info p{line-height:1.8;color:var(--text-gray)}
+
+@media (max-width:800px){
+	.info{padding:.75rem}
+	.info p{font-size:.95rem}
+}

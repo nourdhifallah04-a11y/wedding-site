@@ -1,0 +1,25 @@
+.hero-divider{
+	display:flex;
+	align-items:center;
+	gap:0.75rem;
+	justify-content:center;
+	margin:16px 0;
+}
+.hero-divider-line{
+	flex:1;
+	max-width:480px;
+	height:2px;
+	background:linear-gradient(90deg, transparent, var(--peach-protein), transparent);
+	border-radius:2px;
+	opacity:0.9;
+}
+.hero-divider-star{
+	width:20px;
+	height:20px;
+	fill:var(--peach-protein);
+	flex-shrink:0;
+}
+
+@media(max-width:900px){
+	.hero-divider-line{width:50px}
+}
