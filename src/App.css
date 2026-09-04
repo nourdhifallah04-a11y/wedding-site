@@ -292,8 +292,7 @@ footer{background:var(--peach-pale);padding:3rem 2rem;text-align:center}
   .hero-names{font-size:clamp(2rem,10vw,3.4rem)}
   .hero-amp{display:none}
   .hero-date,.hero-location{font-size:.65rem}
-  .countdown{flex-direction:column;gap:1rem}
-  .couple-grid{grid-template-columns:1fr;gap:1rem;padding:0}
+  .countdown{flex-direction:column;gap:1rem;align-items:center}  .couple-grid{grid-template-columns:1fr;gap:1rem;padding:0}
   .form-wrap{padding:1.25rem;margin:1rem;border-radius:6px}
   .field input,.field textarea{font-size:.95rem}
   .hero-scroll{bottom:1.25rem}

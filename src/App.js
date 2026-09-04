@@ -434,7 +434,7 @@ export default function App() {
             <div className="lieu-grid reveal">
               <div className="photo-slot"><img src="mey06.jpg" alt="Lieu" /></div>
               <div className="photo-slot"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUcxXjAFIYp3xZv1PMDK-lB3T_oj7_PmAWfN8ph9yJTPYKGgQgjGs1QVTk&s=10" alt="Lieu" /></div>
-              <div className="photo-slot"><img src="https://scontent-mrs2-3.xx.fbcdn.net/v/t51.82787-15/612558997_18162871267406002_3320113840660664756_n.jpg?stp=dst-jpg_tt6&cstp=mx1440x1918&ctp=s1440x1918&_nc_cat=102&ccb=1-7&_nc_sid=127cfc&_nc_ohc=1yxieKEj-4sQ7kNvwHRqNvL&_nc_oc=AdpOE9C-HhSmXz6HO9inQg7G8ZDbXRAUwvIbwi2P4U2yekU7rl-_kVwkoZlowhnASRk&_nc_zt=23&_nc_ht=scontent-mrs2-3.xx&_nc_gid=Xuxk6mozF86UuU6OuWYvcw&_nc_ss=7b2a8&oh=00_AQH5iCze0UPnKgW282TIiePMg1jepzdo_2jtNlyBU7Y-YQ&oe=6A97C439" alt="Lieu" /></div>
+              <div className="photo-slot"><img src="meyssem07.jpg" alt="Lieu" /></div>
             </div>
             <a className="map-link" href="https://www.google.com/maps/place/Espace+%22Podium%22/@36.9212155,10.2871359,17z/data=!3m1!4b1!4m6!3m5!1s0x12e2b5c44401cc8f:0xad0cdf2794455fc9!8m2!3d36.9212155!4d10.2897108!16s%2Fg%2F1hf2cpc43?entry=ttu&g_ep=EgoyMDI2MDgyNS4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer">Voir sur Google Maps</a>
           </div>
