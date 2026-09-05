@@ -23,7 +23,7 @@
     "eject": "react-scripts eject",
     "server": "nodemon server/index.js",
     "dev": "concurrently \"npm run server\" \"npm start\"",
-    "render:build": "npm install && npm run build"
+    "render:build": "npm install --include=dev && npm run build"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
