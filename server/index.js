@@ -62,26 +62,26 @@ app.post('/api/messages', (req, res) => {
     const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
     const mailConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 
+    res.status(201).json({ success: true, id: row.id, message: row.message });
+
     if (adminEmail && mailConfigured) {
-      try {
-        await transporter.sendMail({
-          from: `"Site Mariage" <${process.env.SMTP_USER}>`,
-          to: adminEmail,
-          subject: `Nouveau message de ${row.prenom || 'Anonyme'} ${row.nom || ''}`,
-          text: `${row.message}\n\nDe: ${row.prenom || ''} ${row.nom || ''}`,
-          html: `
-            <p>${row.message}</p>
-            <p><small>De: ${row.prenom || ''} ${row.nom || ''}</small></p>
-          `
-        });
-      } catch (mailErr) {
-        console.error('Mail error:', mailErr);
-      }
+      transporter.sendMail({
+        from: `"Site Mariage" <${process.env.SMTP_USER}>`,
+        to: adminEmail,
+        subject: `Nouveau message de ${row.prenom || 'Anonyme'} ${row.nom || ''}`,
+        text: `${row.message}\n\nDe: ${row.prenom || ''} ${row.nom || ''}`,
+        html: `
+          <p>${row.message}</p>
+          <p><small>De: ${row.prenom || ''} ${row.nom || ''}</small></p>
+        `
+      }).then(() => {
+        console.log(`Message email sent to ${adminEmail}`);
+      }).catch(mailErr => {
+        console.error('Mail error:', mailErr.message);
+      });
     } else {
       console.log('SMTP non configuré: message enregistré localement uniquement.');
     }
-
-    return res.status(201).json({ success: true, id: row.id, message: row.message });
   });
 });
 
