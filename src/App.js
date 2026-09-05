@@ -2,11 +2,35 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 
+export function getMessageApiUrl() {
+  const baseUrl = (process.env.REACT_APP_API_URL || '').replace(/\/$/, '');
+  return baseUrl ? `${baseUrl}/api/messages` : '/api/messages';
+}
+
+function getTimeLeft() {
+  const target = new Date('2026-10-18T00:00:00');
+  const now = new Date();
+  const diff = Math.max(target.getTime() - now.getTime(), 0);
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  return {
+    days: String(days).padStart(2, '0'),
+    hours: String(hours).padStart(2, '0'),
+    minutes: String(minutes).padStart(2, '0'),
+    seconds: String(seconds).padStart(2, '0')
+  };
+}
+
 export default function App() {
   const envWrapRef = useRef(null);
   const envOverlayRef = useRef(null);
   const heroRef = useRef(null);
   const [overlayVisible, setOverlayVisible] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(getTimeLeft);
 
   useEffect(() => {
     // petals
@@ -34,10 +58,12 @@ export default function App() {
     }
 
     // reveal observer
-    const observer = new IntersectionObserver(
-      entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
-      { threshold: 0.1 }
-    );
+    const observer = typeof window !== 'undefined' && 'IntersectionObserver' in window
+      ? new IntersectionObserver(
+          entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+          { threshold: 0.1 }
+        )
+      : null;
 
     const activateAllAnimations = () => {
       const animatedEls = document.querySelectorAll(
@@ -57,12 +83,16 @@ export default function App() {
     };
 
     activateAllAnimations();
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    if (observer) {
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    } else {
+      document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
+    }
 
     return () => {
       if (hero) hero.querySelectorAll('.petal').forEach(n => n.remove());
       if (overlay) overlay.querySelectorAll('.env-star').forEach(n => n.remove());
-      observer.disconnect();
+      if (observer) observer.disconnect();
     };
   }, []);
 
@@ -94,23 +124,32 @@ export default function App() {
   useEffect(() => {
     const form = document.getElementById('wedding-form');
     if (!form) return;
+
     const handle = async e => {
       e.preventDefault();
       const btn = form.querySelector('.btn-submit');
+      if (!btn) return;
+
       btn.textContent = 'Envoi en cours…';
       btn.disabled = true;
+
       try {
         const data = {
-          prenom: form.prenom.value,
-          nom: form.nom.value,
-          message: form.message.value
+          prenom: form.elements.prenom?.value || form.prenom?.value || '',
+          nom: form.elements.nom?.value || form.nom?.value || '',
+          message: form.elements.message?.value || form.message?.value || ''
         };
-        const res = await fetch(form.action, {
+
+        const res = await fetch(getMessageApiUrl(), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!res.ok) throw new Error('Network response was not ok');
+
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(result.error || 'Network response was not ok');
+
+        form.reset();
         form.style.display = 'none';
         const success = document.getElementById('form-success');
         if (success) success.style.display = 'block';
@@ -120,47 +159,17 @@ export default function App() {
         btn.disabled = false;
       }
     };
+
     form.addEventListener('submit', handle);
     return () => form.removeEventListener('submit', handle);
   }, []);
 
-  // Countdown timer: update days/hours/minutes/seconds elements every second
   useEffect(() => {
-    // target date for the event (local time)
-    const target = new Date('2026-10-18T00:00:00');
-    let timer = null;
+    const timer = setInterval(() => {
+      setTimeLeft(getTimeLeft());
+    }, 1000);
 
-    function updateCountdown() {
-      const now = new Date();
-      let diff = target - now;
-      if (diff < 0) diff = 0;
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      const dEl = document.getElementById('cd-days');
-      const hEl = document.getElementById('cd-hours');
-      const mEl = document.getElementById('cd-min');
-      const sEl = document.getElementById('cd-sec');
-
-      if (dEl) dEl.textContent = String(days).padStart(2, '0');
-      if (hEl) hEl.textContent = String(hours).padStart(2, '0');
-      if (mEl) mEl.textContent = String(minutes).padStart(2, '0');
-      if (sEl) sEl.textContent = String(seconds).padStart(2, '0');
-
-      if (diff === 0 && timer) {
-        clearInterval(timer);
-        timer = null;
-      }
-    }
-
-    updateCountdown();
-    timer = setInterval(updateCountdown, 1000);
-    return () => {
-      if (timer) clearInterval(timer);
-    };
+    return () => clearInterval(timer);
   }, []);
 
   return (
@@ -301,13 +310,13 @@ export default function App() {
       <div className="countdown-wrap">
         <p className="countdown-label">Le grand jour est dans</p>
         <div className="countdown" id="countdown">
-          <div className="countdown-item"><span className="countdown-num" id="cd-days">--</span><span className="countdown-unit">Jours</span></div>
+          <div className="countdown-item"><span className="countdown-num" id="cd-days">{timeLeft.days}</span><span className="countdown-unit">Jours</span></div>
           <span className="countdown-sep">·</span>
-          <div className="countdown-item"><span className="countdown-num" id="cd-hours">--</span><span className="countdown-unit">Heures</span></div>
+          <div className="countdown-item"><span className="countdown-num" id="cd-hours">{timeLeft.hours}</span><span className="countdown-unit">Heures</span></div>
           <span className="countdown-sep">·</span>
-          <div className="countdown-item"><span className="countdown-num" id="cd-min">--</span><span className="countdown-unit">Minutes</span></div>
+          <div className="countdown-item"><span className="countdown-num" id="cd-min">{timeLeft.minutes}</span><span className="countdown-unit">Minutes</span></div>
           <span className="countdown-sep">·</span>
-          <div className="countdown-item"><span className="countdown-num" id="cd-sec">--</span><span className="countdown-unit">Secondes</span></div>
+          <div className="countdown-item"><span className="countdown-num" id="cd-sec">{timeLeft.seconds}</span><span className="countdown-unit">Secondes</span></div>
         </div>
       </div>
 
@@ -433,7 +442,6 @@ export default function App() {
             <p className="section-text light reveal"><br /></p>
             <div className="lieu-grid reveal">
               <div className="photo-slot"><img src="mey06.jpg" alt="Lieu" /></div>
-              <div className="photo-slot"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUcxXjAFIYp3xZv1PMDK-lB3T_oj7_PmAWfN8ph9yJTPYKGgQgjGs1QVTk&s=10" alt="Lieu" /></div>
               <div className="photo-slot"><img src="meyssem07.jpg" alt="Lieu" /></div>
             </div>
             <a className="map-link" href="https://www.google.com/maps/place/Espace+%22Podium%22/@36.9212155,10.2871359,17z/data=!3m1!4b1!4m6!3m5!1s0x12e2b5c44401cc8f:0xad0cdf2794455fc9!8m2!3d36.9212155!4d10.2897108!16s%2Fg%2F1hf2cpc43?entry=ttu&g_ep=EgoyMDI2MDgyNS4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer">Voir sur Google Maps</a>

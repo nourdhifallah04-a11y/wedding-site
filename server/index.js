@@ -1,6 +1,21 @@
 require('dotenv').config();
+const express = require('express');
+const path = require('path');
 const fs = require('fs');
+const cors = require('cors');
 const nodemailer = require('nodemailer');
+const bodyParser = require('body-parser');
+
+const app = express();
+const PORT = Number(process.env.PORT || process.env.PORT_SERVER || 3001);
+const db = require('./db');
+
+const cleanEnv = (value) => (typeof value === 'string' ? value.trim() : value);
+process.env.SMTP_HOST = cleanEnv(process.env.SMTP_HOST);
+process.env.SMTP_PORT = cleanEnv(process.env.SMTP_PORT);
+process.env.SMTP_USER = cleanEnv(process.env.SMTP_USER);
+process.env.SMTP_PASS = cleanEnv(process.env.SMTP_PASS);
+process.env.ADMIN_EMAIL = cleanEnv(process.env.ADMIN_EMAIL);
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -12,77 +27,72 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Verify SMTP configuration at startup to catch auth/connect errors early
-transporter.verify()
-  .then(() => console.log('SMTP transporter verified — ready to send emails'))
-  .catch(err => console.error('SMTP transporter verification failed:', err));
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 
-const express = require('express');
-const path = require('path');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const { init, addMessage, getMessages } = require('./db');
-
-const app = express();
-// Prefer a dedicated server port to avoid conflicting with Create React App's `PORT`
-const PORT = process.env.PORT_SERVER || process.env.PORT || 3002;
-
-init();
-
-app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '1mb' }));
 
-// Serve admin page
-app.use('/admin', express.static(path.join(__dirname, 'admin')));
-
-// API: receive message submissions
 app.post('/api/messages', (req, res) => {
-  const { prenom, nom, message } = req.body;
-  console.log('Received /api/messages POST:', { prenom, nom, message: message ? message.slice(0,100) : message });
-  if (!message) return res.status(400).json({ error: 'message required' });
-  addMessage({ prenom, nom, message }, (err, row) => {
-    if (err) return res.status(500).json({ error: 'db error' });
+  const { prenom, nom, message } = req.body || {};
+  const cleanPrenom = String(prenom || '').trim();
+  const cleanNom = String(nom || '').trim();
+  const cleanMessage = String(message || '').trim();
 
-    // prepare email notification to admin (if configured)
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (adminEmail) {
-      const mailOptions = {
-        from: `"Site Mariage" <${process.env.SMTP_USER}>`,
-        to: adminEmail,
-        subject: `Nouveau message de ${prenom || 'Anonyme'} ${nom || ''}`,
-        text: `${message}\n\nDe: ${prenom || ''} ${nom || ''}`,
-        html: `<p>${message}</p><p><small>De: ${prenom || ''} ${nom || ''}</small></p>`
-      };
-        (async () => {
-          try {
-            const info = await transporter.sendMail(mailOptions);
-            console.log('Mail sent:', info.messageId);
-            return res.json({ success: true, id: row.id });
-          } catch (e) {
-            console.error('Mail error:', e);
-            return res.status(500).json({ error: 'mail error' });
-          }
-        })();
-        return; // response will be sent from the async sender above
-    } else {
-      console.log('ADMIN_EMAIL not set — skipping email');
+  if (!cleanMessage) {
+    return res.status(400).json({ error: 'Le message est obligatoire' });
+  }
+
+  db.addMessage({
+    prenom: cleanPrenom,
+    nom: cleanNom,
+    message: cleanMessage
+  }, async (err, row) => {
+    if (err) {
+      console.error('DB write error:', err);
+      return res.status(500).json({ error: 'Échec de l\'enregistrement du message' });
     }
-      res.json({ success: true, id: row.id });
+
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
+    const mailConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+
+    if (adminEmail && mailConfigured) {
+      try {
+        await transporter.sendMail({
+          from: `"Site Mariage" <${process.env.SMTP_USER}>`,
+          to: adminEmail,
+          subject: `Nouveau message de ${row.prenom || 'Anonyme'} ${row.nom || ''}`,
+          text: `${row.message}\n\nDe: ${row.prenom || ''} ${row.nom || ''}`,
+          html: `
+            <p>${row.message}</p>
+            <p><small>De: ${row.prenom || ''} ${row.nom || ''}</small></p>
+          `
+        });
+      } catch (mailErr) {
+        console.error('Mail error:', mailErr);
+      }
+    } else {
+      console.log('SMTP non configuré: message enregistré localement uniquement.');
+    }
+
+    return res.status(201).json({ success: true, id: row.id, message: row.message });
   });
 });
 
-
-// API: list messages (JSON)
 app.get('/api/messages', (req, res) => {
-  getMessages((err, rows) => {
-    if (err) return res.status(500).json({ error: 'db error' });
+  db.getMessages((err, rows) => {
+    if (err) {
+      console.error('DB read error:', err);
+      return res.status(500).json({ error: 'failed to read messages' });
+    }
     res.json(rows);
   });
 });
 
-// Serve React static build when available (production/full‑stack deploy)
 const buildPath = path.join(__dirname, '..', 'build');
+
 if (fs.existsSync(buildPath)) {
   app.use(express.static(buildPath));
   app.get('*', (req, res) => {
@@ -90,6 +100,16 @@ if (fs.existsSync(buildPath)) {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
-});
+async function startServer() {
+  try {
+    await db.init();
+  } catch (err) {
+    console.error('Failed to initialize database:', err);
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+startServer();
