@@ -111,6 +111,17 @@ async function startServer() {
     console.error('Failed to initialize database:', err);
   }
 
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    try {
+      await transporter.verify();
+      console.log(`SMTP ready for ${process.env.SMTP_USER}`);
+    } catch (err) {
+      console.error('SMTP configuration failed:', err.message);
+    }
+  } else {
+    console.warn('SMTP not configured: messages will be stored without email notification.');
+  }
+
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
