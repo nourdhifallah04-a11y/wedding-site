@@ -35,6 +35,10 @@ app.use(cors({
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json({ limit: '1mb' }));
 
+app.get('/healthz', (req, res) => {
+  res.json({ ok: true, mongodb: db.isConnected() });
+});
+
 app.post('/api/messages', (req, res) => {
   const { prenom, nom, message } = req.body || {};
   const cleanPrenom = String(prenom || '').trim();

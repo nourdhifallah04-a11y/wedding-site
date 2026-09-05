@@ -56,6 +56,10 @@ function hasMongo() {
   return Boolean(mongoClient && mongoDb);
 }
 
+function isConnected() {
+  return hasMongo();
+}
+
 function addMessage({ prenom, nom, message }, cb) {
   if (hasMongo()) {
     const created_at = new Date().toISOString();
@@ -108,4 +112,4 @@ function getMessages(cb) {
   cb(null, rows);
 }
 
-module.exports = { init, addMessage, getMessages };
+module.exports = { init, addMessage, getMessages, isConnected };
