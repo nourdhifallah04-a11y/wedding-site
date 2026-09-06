@@ -1,41 +1,21 @@
 require('dotenv').config();
-const dns = require('dns');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const bodyParser = require('body-parser');
 
 const app = express();
-dns.setDefaultResultOrder('ipv4first');
 const PORT = Number(process.env.PORT || process.env.PORT_SERVER || 3001);
 const db = require('./db');
 
 const cleanEnv = (value) => (typeof value === 'string' ? value.trim() : value);
-process.env.SMTP_HOST = cleanEnv(process.env.SMTP_HOST);
-process.env.SMTP_PORT = cleanEnv(process.env.SMTP_PORT);
-process.env.SMTP_USER = cleanEnv(process.env.SMTP_USER);
-process.env.SMTP_PASS = cleanEnv(process.env.SMTP_PASS);
-process.env.SMTP_FROM = cleanEnv(process.env.SMTP_FROM);
+process.env.RESEND_API_KEY = cleanEnv(process.env.RESEND_API_KEY);
+process.env.RESEND_FROM = cleanEnv(process.env.RESEND_FROM);
 process.env.ADMIN_EMAIL = cleanEnv(process.env.ADMIN_EMAIL);
 
-const smtpPort = Number(process.env.SMTP_PORT) || 2525;
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: smtpPort,
-  secure: smtpPort === 465,
-  requireTLS: smtpPort === 587 || smtpPort === 2525,
-  family: 4,
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  }
-});
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 app.use(cors({
   origin: true,
@@ -69,15 +49,14 @@ app.post('/api/messages', (req, res) => {
       return res.status(500).json({ error: 'Échec de l\'enregistrement du message' });
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
-    const mailConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const mailConfigured = Boolean(resend && process.env.RESEND_FROM && adminEmail);
 
     res.status(201).json({ success: true, id: row.id, message: row.message });
 
     if (adminEmail && mailConfigured) {
-      const senderEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
-      transporter.sendMail({
-        from: `"Site Mariage" <${senderEmail}>`,
+      resend.emails.send({
+        from: process.env.RESEND_FROM,
         to: adminEmail,
         subject: `Nouveau message de ${row.prenom || 'Anonyme'} ${row.nom || ''}`,
         text: `${row.message}\n\nDe: ${row.prenom || ''} ${row.nom || ''}`,
@@ -85,13 +64,17 @@ app.post('/api/messages', (req, res) => {
           <p>${row.message}</p>
           <p><small>De: ${row.prenom || ''} ${row.nom || ''}</small></p>
         `
-      }).then(() => {
-        console.log(`Message email sent to ${adminEmail}`);
+      }).then(({ data, error }) => {
+        if (error) {
+          console.error('Mail error:', error);
+          return;
+        }
+        console.log(`Message email sent to ${adminEmail} (${data?.id || 'accepted'})`);
       }).catch(mailErr => {
         console.error('Mail error:', mailErr.message);
       });
     } else {
-      console.log('SMTP non configuré: message enregistré localement uniquement.');
+      console.warn('Resend non configuré: message enregistré sans notification email.');
     }
   });
 });
@@ -126,15 +109,10 @@ async function startServer() {
     console.error('Failed to initialize database:', err);
   }
 
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    try {
-      await transporter.verify();
-      console.log(`SMTP ready for ${process.env.SMTP_USER}`);
-    } catch (err) {
-      console.error('SMTP configuration failed:', err.message);
-    }
+  if (resend && process.env.RESEND_FROM && process.env.ADMIN_EMAIL) {
+    console.log(`Resend ready from ${process.env.RESEND_FROM}`);
   } else {
-    console.warn('SMTP not configured: messages will be stored without email notification.');
+    console.warn('Resend not configured: messages will be stored without email notification.');
   }
 }
 
