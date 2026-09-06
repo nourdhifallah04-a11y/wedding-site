@@ -17,10 +17,13 @@ process.env.SMTP_USER = cleanEnv(process.env.SMTP_USER);
 process.env.SMTP_PASS = cleanEnv(process.env.SMTP_PASS);
 process.env.ADMIN_EMAIL = cleanEnv(process.env.ADMIN_EMAIL);
 
+const smtpPort = Number(process.env.SMTP_PORT) || 587;
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 465,
-  secure: true,
+  port: smtpPort,
+  secure: smtpPort === 465,
+  requireTLS: smtpPort === 587,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
