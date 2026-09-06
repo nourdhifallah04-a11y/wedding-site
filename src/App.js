@@ -483,7 +483,7 @@ export default function App() {
 
         <footer>
           <div className="footer-names">Saif &amp; Meyssem</div>
-          <div className="footer-date">Le 18 October 2026 &nbsp;·&nbsp; ESPACE PODIUM GAMMARTH</div>
+          <div className="footer-date">Le 18 Octobre 2026 &nbsp;·&nbsp; ESPACE PODIUM GAMMARTH</div>
         </footer>
       </main>
     </div>
