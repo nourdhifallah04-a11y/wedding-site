@@ -17,6 +17,7 @@ process.env.SMTP_HOST = cleanEnv(process.env.SMTP_HOST);
 process.env.SMTP_PORT = cleanEnv(process.env.SMTP_PORT);
 process.env.SMTP_USER = cleanEnv(process.env.SMTP_USER);
 process.env.SMTP_PASS = cleanEnv(process.env.SMTP_PASS);
+process.env.SMTP_FROM = cleanEnv(process.env.SMTP_FROM);
 process.env.ADMIN_EMAIL = cleanEnv(process.env.ADMIN_EMAIL);
 
 const smtpPort = Number(process.env.SMTP_PORT) || 587;
@@ -74,8 +75,9 @@ app.post('/api/messages', (req, res) => {
     res.status(201).json({ success: true, id: row.id, message: row.message });
 
     if (adminEmail && mailConfigured) {
+      const senderEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
       transporter.sendMail({
-        from: `"Site Mariage" <${process.env.SMTP_USER}>`,
+        from: `"Site Mariage" <${senderEmail}>`,
         to: adminEmail,
         subject: `Nouveau message de ${row.prenom || 'Anonyme'} ${row.nom || ''}`,
         text: `${row.message}\n\nDe: ${row.prenom || ''} ${row.nom || ''}`,
