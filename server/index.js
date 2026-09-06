@@ -20,13 +20,13 @@ process.env.SMTP_PASS = cleanEnv(process.env.SMTP_PASS);
 process.env.SMTP_FROM = cleanEnv(process.env.SMTP_FROM);
 process.env.ADMIN_EMAIL = cleanEnv(process.env.ADMIN_EMAIL);
 
-const smtpPort = Number(process.env.SMTP_PORT) || 587;
+const smtpPort = Number(process.env.SMTP_PORT) || 2525;
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: smtpPort,
   secure: smtpPort === 465,
-  requireTLS: smtpPort === 587,
+  requireTLS: smtpPort === 587 || smtpPort === 2525,
   family: 4,
   connectionTimeout: 10000,
   greetingTimeout: 10000,
