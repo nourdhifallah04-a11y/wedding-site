@@ -302,7 +302,7 @@ export default function App() {
           <p className="hero-location">Vous invitent à célébrer leur union</p>
          
         <a className="hero-scroll" href="#histoire">
-          <span><b>Découvrir</b></span>
+          <span><b>Défilez pour découvrir</b></span>
           <div className="hero-scroll-line" />
         </a>
       </section>

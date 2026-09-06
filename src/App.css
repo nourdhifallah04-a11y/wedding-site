@@ -134,8 +134,8 @@ section, footer, .hero, .countdown-wrap, .histoire-section, .programme-section, 
 .hero-amp{display:block;font-size:clamp(2rem,5vw,3.5rem);color:var(--gold);margin:.1em 0}
 .hero-location{font-size:.88rem;letter-spacing:.3em;color:rgba(255,255,255,0.65);text-transform:uppercase;margin-top:1.5rem;opacity:0;animation:fadeUp 1s .9s forwards}
 .hero-scroll{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.5rem;opacity:0;animation:fadeUp 1s 1.4s forwards;cursor:pointer;text-decoration:none;z-index:2}
-.hero-scroll span{font-size:.62rem;letter-spacing:.28em;color:var(--gold);text-transform:uppercase}
-.hero-scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,var(--gold),transparent);animation:scrollPulse 2s 2s infinite}
+.hero-scroll span{font-size:.62rem;letter-spacing:.2em;color:var(--green-sage);text-transform:uppercase;text-align:center;white-space:nowrap}
+.hero-scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,var(--green-sage),transparent);animation:scrollPulse 2s 2s infinite}
 
 .section-label{font-size:.75rem;letter-spacing:.35em;text-transform:uppercase;color:var(--gold);margin-bottom:.75rem}
 .section-title{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(2.1rem,4vw,3.2rem);line-height:1.2;margin-bottom:1.5rem}
