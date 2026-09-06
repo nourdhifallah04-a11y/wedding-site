@@ -1,4 +1,5 @@
 require('dotenv').config();
+const dns = require('dns');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -7,6 +8,7 @@ const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 
 const app = express();
+dns.setDefaultResultOrder('ipv4first');
 const PORT = Number(process.env.PORT || process.env.PORT_SERVER || 3001);
 const db = require('./db');
 
@@ -25,6 +27,9 @@ const transporter = nodemailer.createTransport({
   secure: smtpPort === 465,
   requireTLS: smtpPort === 587,
   family: 4,
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
@@ -109,6 +114,10 @@ if (fs.existsSync(buildPath)) {
 }
 
 async function startServer() {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+
   try {
     await db.init();
   } catch (err) {
@@ -125,10 +134,6 @@ async function startServer() {
   } else {
     console.warn('SMTP not configured: messages will be stored without email notification.');
   }
-
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
 }
 
 startServer();
